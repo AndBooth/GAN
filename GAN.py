@@ -45,11 +45,6 @@ def discriminator(img_shape):
 
 def gan(generator, discriminator):
 
-    # Set discriminator training to False to freeze its weights
-    discriminator.trainable = False
-    for layer in discriminator.layers:
-        layer.trainable = False
-
     inputs = Input(batch_shape = (None,100))
 
     X = generator(inputs)
@@ -100,7 +95,7 @@ realimgs =
 # Two methods to sample real images
 # 1. Create permuted idxs of range of real images then use sequences from this in order
 # permutatedidxs = np.random.permutation(realimgs.shape[0])
-# 2. Randomly sample idxs per step  # Currently using this one
+# 2. Randomly sample idxs per step  # CURRENTLY USING THIS ONE
 
 for step in range(steps):
 
@@ -110,6 +105,24 @@ for step in range(steps):
     steprealimgs = realimgs[0,:,:]
 
     stepfakeimgs = gen.predict(stepnoise)  # Generate fake images for this step
+
+    # Make discriminator trainable to update its weights on fake and real images
+    disc.trainable = True
+    for layer in disc.layers:
+        layer.trainable = True
+    # train discriminator
+    # two ways to try and train the discriminator
+    # 1. Concatenate real and fake images and trian at same time - TRYING THIS ONE CURRENTLY
+    # 2. Train in separate batches
+    stepdlossreal = disc.train_on_batch(steprealimgs, )  # Add ones
+    stepdlossfake = disc.train_on_batch(stepfakeimgs, )  # Add zeros - CAN TRY SWAPPING LABELS SOMETIMES
+
+    # Set discriminator training to False to freeze its weights while training the GAN
+    discriminator.trainable = False
+    for layer in discriminator.layers:
+        layer.trainable = False
+
+    
 
     print(stepnoise)
 
