@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import keras
+import random
 from keras import optimizers
 from keras.layers import Input, Dense, Reshape, Flatten
 from keras.models import Model, Sequential
@@ -81,8 +82,37 @@ print(preds)
 # Build GAN by passing generator and discriminator Models
 gan = gan(gen, disc)
 gan.summary()
+gan.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
 
 gan_out = gan.predict(noise)
 
 print(gan_out.shape)
 #print(disc_out)
+
+
+## Training loop
+steps = 1000
+batchsize = 128  # number of sampled fake and real images per step
+
+# Import real images
+realimgs = 
+
+# Two methods to sample real images
+# 1. Create permuted idxs of range of real images then use sequences from this in order
+# permutatedidxs = np.random.permutation(realimgs.shape[0])
+# 2. Randomly sample idxs per step  # Currently using this one
+
+for step in range(steps):
+
+    # generate for this step
+    stepnoise = np.random.uniform(0, 1, size = (batchsize, 100))  # Noise
+    steprealidxs = np.random.randint(0, realimgs.shape[0], batchsize)  # idxs to sample real images
+    steprealimgs = realimgs[0,:,:]
+
+    stepfakeimgs = gen.predict(stepnoise)  # Generate fake images for this step
+
+    print(stepnoise)
+
+
+
+
