@@ -3,10 +3,12 @@ import numpy as np
 import os
 import keras
 import random
+import matplotlib.pyplot as plt
 from keras import optimizers
 from keras.layers import Input, Dense, Reshape, Flatten
 from keras.models import Model, Sequential
 from keras.activations import relu, softmax
+from keras.datasets import mnist
 
 ### A generator
 # input: noise
@@ -66,13 +68,13 @@ disc.summary()
 adam = optimizers.Adam(lr = 0.001)
 
 # Pretrain discriminator
-imgs = gen.predict(noise)  # Create some fake images
-noise_label = np.zeros(100)  # Fake labels for images
+# imgs = gen.predict(noise)  # Create some fake images
+# noise_label = np.zeros(100)  # Fake labels for images
 disc.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
-disc.fit(imgs, noise_label)
+# disc.fit(imgs, noise_label)
 
-preds = disc.predict(imgs)
-print(preds)
+# preds = disc.predict(imgs)
+# print(preds)
 
 # Build GAN by passing generator and discriminator Models
 gan = gan(gen, disc)
@@ -86,11 +88,12 @@ print(gan_out.shape)
 
 
 ## Training loop
-steps = 1000
+steps = 10000
 batchsize = 128  # number of sampled fake and real images per step
 
 # Import real images
-realimgs = 
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+realimgs = np.concatenate((x_train, x_test), axis = 0)
 
 # Two methods to sample real images
 # 1. Create permuted idxs of range of real images then use sequences from this in order
@@ -102,7 +105,7 @@ for step in range(steps):
     # generate for this step
     stepnoise = np.random.uniform(0, 1, size = (batchsize, 100))  # Noise
     steprealidxs = np.random.randint(0, realimgs.shape[0], batchsize)  # idxs to sample real images
-    steprealimgs = realimgs[0,:,:]
+    steprealimgs = realimgs[steprealidxs, :, :]
 
     stepfakeimgs = gen.predict(stepnoise)  # Generate fake images for this step
 
@@ -112,19 +115,35 @@ for step in range(steps):
         layer.trainable = True
     # train discriminator
     # two ways to try and train the discriminator
-    # 1. Concatenate real and fake images and trian at same time - TRYING THIS ONE CURRENTLY
-    # 2. Train in separate batches
-    stepdlossreal = disc.train_on_batch(steprealimgs, )  # Add ones
-    stepdlossfake = disc.train_on_batch(stepfakeimgs, )  # Add zeros - CAN TRY SWAPPING LABELS SOMETIMES
+    # 1. Concatenate real and fake images and trian at same time 
+    # 2. Train in separate batches - TRYING THIS ONE CURRENTLY
+    stepdlossreal = disc.train_on_batch(steprealimgs, np.ones(batchsize))  # Label as 1s - i.e. true label
+    stepdlossfake = disc.train_on_batch(stepfakeimgs, np.zeros(batchsize))  # Label as 0s - i.e. fake label - CAN TRY SWAPPING LABELS SOMETIMES
 
     # Set discriminator training to False to freeze its weights while training the GAN
-    discriminator.trainable = False
-    for layer in discriminator.layers:
+    disc.trainable = False
+    for layer in disc.layers:
         layer.trainable = False
 
-    
+    stepgloss = gan.train_on_batch(stepnoise, np.ones(batchsize))
 
-    print(stepnoise)
+    if step % 200 == 0:
+        plotnoise = np.random.uniform(0, 1, size = (16, 100))
+        fakeplots = gen.predict(plotnoise)
+
+        plt.figure(figsize=(10,10))  # todo: write plotting as a function
+        for i in range(fakeplots.shape[0]):
+            plt.subplot(4, 4, i+1)
+            image = fakeplots[i, :, :]
+            #image = np.reshape(image, [self.img_rows, self.img_cols])
+            plt.imshow(image, cmap='gray')
+            plt.axis('off')
+        plt.tight_layout()
+            
+        plt.savefig('plot_' + str(step) + ".png" )
+        plt.close('all')
+
+    #print(stepnoise)
 
 
 
