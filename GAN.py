@@ -9,6 +9,7 @@ from keras.layers import Input, Dense, Reshape, Flatten
 from keras.models import Model, Sequential
 from keras.activations import relu, softmax
 from keras.datasets import mnist
+from utils import plotimgs
 
 ### A generator
 # input: noise
@@ -88,12 +89,15 @@ print(gan_out.shape)
 
 
 ## Training loop
-steps = 10000
+steps = 5000
+discK = 2  # Number of times to update discriminator weights per training step
 batchsize = 128  # number of sampled fake and real images per step
 
-# Import real images
+
+# Import real images and normalise to [-1, 1]
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 realimgs = np.concatenate((x_train, x_test), axis = 0)
+realimgs = realimgs / 127.5 - 1.
 
 # Two methods to sample real images
 # 1. Create permuted idxs of range of real images then use sequences from this in order
@@ -117,8 +121,10 @@ for step in range(steps):
     # two ways to try and train the discriminator
     # 1. Concatenate real and fake images and trian at same time 
     # 2. Train in separate batches - TRYING THIS ONE CURRENTLY
-    stepdlossreal = disc.train_on_batch(steprealimgs, np.ones(batchsize))  # Label as 1s - i.e. true label
-    stepdlossfake = disc.train_on_batch(stepfakeimgs, np.zeros(batchsize))  # Label as 0s - i.e. fake label - CAN TRY SWAPPING LABELS SOMETIMES
+    # Can upate discriminator weights up to K times in loop
+    for K in range(discK):
+        stepdlossreal = disc.train_on_batch(steprealimgs, np.ones(batchsize))  # Label as 1s - i.e. true label
+        stepdlossfake = disc.train_on_batch(stepfakeimgs, np.zeros(batchsize))  # Label as 0s - i.e. fake label - CAN TRY SWAPPING LABELS SOMETIMES
 
     # Set discriminator training to False to freeze its weights while training the GAN
     disc.trainable = False
@@ -129,20 +135,8 @@ for step in range(steps):
 
     if step % 200 == 0:
         plotnoise = np.random.uniform(0, 1, size = (16, 100))
-        fakeplots = gen.predict(plotnoise)
-
-        plt.figure(figsize=(10,10))  # todo: write plotting as a function
-        for i in range(fakeplots.shape[0]):
-            plt.subplot(4, 4, i+1)
-            image = fakeplots[i, :, :]
-            #image = np.reshape(image, [self.img_rows, self.img_cols])
-            plt.imshow(image, cmap='gray')
-            plt.axis('off')
-        plt.tight_layout()
-            
-        plt.savefig('plot_' + str(step) + ".png" )
-        plt.close('all')
-
+        fakeplots = gen.predict(pnoise)
+        plotimgs(fakeplots)
     #print(stepnoise)
 
 
