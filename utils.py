@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def plotimgs(plots):
+def plotimgs(plots, step):
     
     plt.figure(figsize=(10,10))  # todo: write plotting as a function
     for i in range(plots.shape[0]):
