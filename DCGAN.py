@@ -144,7 +144,7 @@ for step in range(steps):
 
     stepgloss = gan.train_on_batch(stepnoise, np.ones(batchsize))
 
-    if step % 20 == 0:
+    if step % 100 == 0:
         plotnoise = np.random.uniform(-1, 1, size = (16, 100))
         fakeplots = gen.predict(plotnoise)
         fakeplots = np.reshape(fakeplots, (fakeplots.shape[0], fakeplots.shape[1], fakeplots.shape[2]))

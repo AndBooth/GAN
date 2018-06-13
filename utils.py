@@ -11,5 +11,5 @@ def plotimgs(plots, step):
         plt.axis('off')
     plt.tight_layout()
         
-    plt.savefig('plot_' + str(step) + ".png" )
+    plt.savefig('images/plot_' + str(step) + ".png" )
     plt.close('all')
